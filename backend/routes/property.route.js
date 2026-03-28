@@ -10,7 +10,7 @@ const propertyRouter = express.Router();
 propertyRouter.get("/get",getAllProperties);
 propertyRouter.post("/create",authMiddleware,isSeller, upload.array("images",5),createProperty);
 propertyRouter.get("/get/:id",getPropertyById);
-propertyRouter.delete("/delete",authMiddleware,isSeller,deleteProperty);
+propertyRouter.delete("/delete/:id",authMiddleware,isSeller,deleteProperty);
 
 
 
