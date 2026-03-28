@@ -2,16 +2,9 @@ import Property from "../models/property.model.js";
 
 export const createProperty = async (req, res) => {
   try {
-    const { title, description, price, location, propertyType, createdBy } =
-      req.body;
-    if (
-      !title ||
-      !description ||
-      !price ||
-      !location ||
-      !createdBy ||
-      !propertyType
-    ) {
+    const { title, description, price, location, propertyType } = req.body;
+    const createdBy = req.user._id;
+    if (!title || !description || !price || !location || !propertyType) {
       return res.status(400).json({ messsage: "Missing fields required!" });
     }
     const images =
@@ -27,7 +20,6 @@ export const createProperty = async (req, res) => {
       createdBy,
       images,
       propertyType,
-      
     });
 
     return res
@@ -38,6 +30,8 @@ export const createProperty = async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 };
+
+
 
 export const getAllProperties = async (req, res) => {
   try {
@@ -55,34 +49,58 @@ export const getAllProperties = async (req, res) => {
   }
 };
 
+
+
 export const getPropertyById = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(id);
+    
 
-    const property = await Property.findById(id).populate({ createdBy, name });
+    const property = await Property.findById(id)
     if (!property) {
       return res.status(404).json({ message: "Property not found" });
     }
-    return res.status(200).josn({ property });
+    return res.status(200).json({ property });
   } catch (error) {
     console.error("Get property by id error ", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
 
+
+
+
 export const deleteProperty = async (req, res) => {
   try {
+    
     const { id } = req.params;
-    const property = await Property.findByIdAndDelete(id);
+    const userId = req.user._id; 
+    console.log(id)
+
+    if (!id) {
+      return res.status(400).json({ message: "Property ID is required" });
+    }
+
+    const property = await Property.findById(id);
+
     if (!property) {
       return res.status(404).json({ message: "Property not found" });
     }
 
-    return res.status(200).json({ message: "Property deleted successfully" });
+    if (property.createdBy.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You are not authorized to delete this property" });
+    }
+
+    // Delete the property
+    await Property.findByIdAndDelete(id);
+
+    res.status(200).json({ message: "Property deleted successfully" });
   } catch (error) {
-    console.error("Deleted property error", error);
-    return res.status(500).json({ messsage: "Internal server error" });
+    console.error("Delete property error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
